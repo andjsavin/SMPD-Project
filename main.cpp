@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[])
 {
-    comb(64, 5);
+    comb(10, 4);
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
