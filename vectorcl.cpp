@@ -21,7 +21,7 @@ std::vector<std::vector<int> > comb(int N, int K)
 //    int c = 1; //for testing
     do {
         std::vector<int> vh; //helping vector
-        std::cout << c << " | ";
+//        std::cout << c << " | ";
         for (int i = 0; i < N; ++i) // [0..N-1] integers
         {
             if (bitmask[i]) { // if we have 1 in the N bit of bitmask we store it in subvector
@@ -35,4 +35,14 @@ std::vector<std::vector<int> > comb(int N, int K)
     } while (std::prev_permutation(bitmask.begin(), bitmask.end())); // lexicographilly permute bitmask
     //for example if we had [1 1 0 0] we will have [1 0 1 0]
     return vc;
+}
+
+void printv(std::vector<std::vector<int>> v)
+{
+    for (int i = 0; i < v.size(); i++) {
+        for (int j = 0; j < v[i].size(); j++) {
+            std::cout << " " << v[i][j];
+        }
+        std::cout << std::endl;
+    }
 }
