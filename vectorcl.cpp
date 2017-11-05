@@ -146,26 +146,13 @@ void printvv(std::vector<std::vector<float>> v) {
     std::cout << std::endl;
 }
 
-std::vector<float> getProbabilityVector(int n)
+std::vector<float> getProbabilityVector(int k)
 {
     std::vector<float> v;
-    for (int i = 0; i < n; i++) {
-        v.push_back(1);
+    for (int i = 0; i < k; i++) {
+        v.push_back(1.0/k);
     }
     return v;
-}
-
-std::vector<std::vector<float>> setProbability(std::vector<float> prob, std::vector<std::vector<float>>  v)
-{
-    std::vector<std::vector<float>> vh;
-    for (int i = 0; i < v.size(); i++) {
-        std::vector<float> vv;
-        for (int j = 0; j < v[i].size(); j++) {
-            vv.push_back(v[i][j]*prob[i]);
-        }
-        vh.push_back(vv);
-    }
-    return vh;
 }
 
 std::vector<std::vector<float>> minusAvg(std::vector<float> v, std::vector<std::vector<float>> m)
@@ -181,7 +168,7 @@ std::vector<std::vector<float>> minusAvg(std::vector<float> v, std::vector<std::
     return vh;
 }
 
-std::vector<std::vector<float>> multiplyMatrix(std::vector<std::vector<float>> v1, std::vector<std::vector<float>> v2)
+std::vector<std::vector<float>> multiplyMatrix(std::vector<std::vector<float>> v1, std::vector<std::vector<float>> v2, std::vector<float> prob)
 {
     std::vector<std::vector<float>> vh;
     for (int i = 0; i < v1.size(); i++) {
@@ -189,7 +176,7 @@ std::vector<std::vector<float>> multiplyMatrix(std::vector<std::vector<float>> v
         for (int j = 0; j < v2[0].size(); j++) {
             float temp = 0;
             for (int inner = 0; inner < v1[i].size(); inner++) {
-                temp += v1[i][inner]*v2[inner][j];
+                temp += v1[i][inner]*v2[inner][j] * prob[inner];
             }
             vv.push_back(temp);
         }
@@ -215,4 +202,17 @@ QString vectorToString(std::vector<int> v)
         s += QString::number(v[i]) + " ";
     }
     return s;
+}
+
+std::vector<std::vector<float>> mx(float x, std::vector<std::vector<float>> m)
+{
+    std::vector<std::vector<float>> vh;
+    for (int i = 0; i < m.size(); i++){
+        std::vector<float> vv;
+        for (int j = 0; j < m[i].size(); j++) {
+            vv.push_back(m[i][j]/x);
+        }
+        vh.push_back(vv);
+    }
+    return vh;
 }

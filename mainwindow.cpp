@@ -102,20 +102,18 @@ void MainWindow::on_FSpushButtonCompute_clicked()
             class2ObFeatures = transponate(class2ObFeatures);
             std::vector<std::vector<float>> cl1MAvg = minusAvg(getMatrixMedian(class1ObFeatures), class1ObFeatures);
             std::vector<std::vector<float>> cl2MAvg = minusAvg(getMatrixMedian(class2ObFeatures), class2ObFeatures);
-            cl1MAvg = setProbability(getProbabilityVector(database.getNoFeatures()), cl1MAvg);
-            cl2MAvg = setProbability(getProbabilityVector(database.getNoFeatures()), cl2MAvg);
             std::vector<std::vector<int>> featureCombinations = comb(database.getNoFeatures(), dimension);
             std::map<std::vector<int>, float> ftrs;
             for (int i = 0; i < featureCombinations.size(); i++) {
                 std::vector<std::vector<float>> comb1 = getMatrixFromVector(featureCombinations[i], cl1MAvg);
                 std::vector<std::vector<float>> comb2 = getMatrixFromVector(featureCombinations[i], cl2MAvg);
-                std::vector<std::vector<float>> mm1 = multiplyMatrix(comb1, transponate(comb1));
-                std::vector<std::vector<float>> mm2 = multiplyMatrix(comb2, transponate(comb2));
+                std::vector<std::vector<float>> mm1 = multiplyMatrix(comb1, transponate(comb1), getProbabilityVector(class1.size()));
+                std::vector<std::vector<float>> mm2 = multiplyMatrix(comb2, transponate(comb2), getProbabilityVector(class2.size()));
                 std::vector<float> median1 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class1ObFeatures));
                 std::vector<float> median2 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class2ObFeatures));
                 float medianModule = getVectorModule(getVectorDifference(median1, median2));
                 if (dimension == 1) {
-                    ftrs[featureCombinations[i]] = medianModule/(sqrt(getMatrixDeterminant(mm1)/class1.size()) + sqrt(getMatrixDeterminant(mm2)/class2.size()));
+                    ftrs[featureCombinations[i]] = medianModule/(sqrt(getMatrixDeterminant(mm1)) + sqrt(getMatrixDeterminant(mm2)));
                 } else {
                 ftrs[featureCombinations[i]] = medianModule/(getMatrixDeterminant(mm1) + getMatrixDeterminant(mm2));
                 }
