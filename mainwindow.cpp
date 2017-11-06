@@ -112,6 +112,8 @@ void MainWindow::on_FSpushButtonCompute_clicked()
                 std::vector<float> median1 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class1ObFeatures));
                 std::vector<float> median2 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class2ObFeatures));
                 float medianModule = getVectorModule(getVectorDifference(median1, median2));
+                float dt1 = getMatrixDeterminant(mm1);
+                float dt2 = getMatrixDeterminant(mm2);
                 if (dimension == 1) {
                     ftrs[featureCombinations[i]] = medianModule/(sqrt(getMatrixDeterminant(mm1)) + sqrt(getMatrixDeterminant(mm2)));
                 } else {
