@@ -102,34 +102,73 @@ void MainWindow::on_FSpushButtonCompute_clicked()
             class2ObFeatures = transponate(class2ObFeatures);
             std::vector<std::vector<float>> cl1MAvg = minusAvg(getMatrixMedian(class1ObFeatures), class1ObFeatures);
             std::vector<std::vector<float>> cl2MAvg = minusAvg(getMatrixMedian(class2ObFeatures), class2ObFeatures);
-            std::vector<std::vector<int>> featureCombinations = comb(database.getNoFeatures(), dimension);
-            std::map<std::vector<int>, float> ftrs;
-            for (int i = 0; i < featureCombinations.size(); i++) {
-                std::vector<std::vector<float>> comb1 = getMatrixFromVector(featureCombinations[i], cl1MAvg);
-                std::vector<std::vector<float>> comb2 = getMatrixFromVector(featureCombinations[i], cl2MAvg);
+            int N = database.getNoFeatures();
+            int K = dimension;
+            std::string bitmask(K, 1);
+            bitmask.resize(N, 0);
+            float max = 0.0;
+            std::vector<int> maxVector;
+            do {
+                std::vector<int> vh;
+                for (int i = 0; i < N; ++i)
+                {
+                    if (bitmask[i]) {
+                        vh.push_back(i);
+                    }
+                }
+                std::vector<std::vector<float>> comb1 = getMatrixFromVector(vh, cl1MAvg);
+                std::vector<std::vector<float>> comb2 = getMatrixFromVector(vh, cl2MAvg);
                 std::vector<std::vector<float>> mm1 = multiplyMatrix(comb1, transponate(comb1), getProbabilityVector(class1.size()));
                 std::vector<std::vector<float>> mm2 = multiplyMatrix(comb2, transponate(comb2), getProbabilityVector(class2.size()));
-                std::vector<float> median1 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class1ObFeatures));
-                std::vector<float> median2 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class2ObFeatures));
+                std::vector<float> median1 = getVectorFromVector(vh, getMatrixMedian(class1ObFeatures));
+                std::vector<float> median2 = getVectorFromVector(vh, getMatrixMedian(class2ObFeatures));
                 float medianModule = getVectorModule(getVectorDifference(median1, median2));
                 float dt1 = getMatrixDeterminant(mm1);
                 float dt2 = getMatrixDeterminant(mm2);
                 if (dimension == 1) {
-                    ftrs[featureCombinations[i]] = medianModule/(sqrt(getMatrixDeterminant(mm1)) + sqrt(getMatrixDeterminant(mm2)));
+                    if (max < medianModule/(sqrt(dt1) + sqrt(dt2)))
+                    {
+                        maxVector = vh;
+                        max = medianModule/(sqrt(dt1) + sqrt(dt2));
+                    }
                 } else {
-                ftrs[featureCombinations[i]] = medianModule/(getMatrixDeterminant(mm1) + getMatrixDeterminant(mm2));
+                    if (max < medianModule/(dt1 + dt2))
+                    {
+                        maxVector= vh;
+                        max = medianModule/(dt1 + dt2);
+                    }
                 }
-            }
-            float max = 0.0;
-            std::pair<std::vector<int>, float> maxp;
-            for (auto it = ftrs.begin(); it != ftrs.end(); ++it) {
-                if (it->second > max) {
-                    max = it->second;
-                    maxp = std::make_pair(it->first, it->second);
-                }
-            }
-            QString s = vectorToString(maxp.first);
-            ui->FStextBrowserDatabaseInfo->append("max_vector: {"  +  s + "} " + QString::number(maxp.second));
+            } while (std::prev_permutation(bitmask.begin(), bitmask.end())); // lexicographilly permute bitmask
+            QString s = vectorToString(maxVector);
+            ui->FStextBrowserDatabaseInfo->append("max_vector: {"  +  s + "} " + QString::number(max));
+//            std::vector<std::vector<int>> featureCombinations = comb(database.getNoFeatures(), dimension);
+//            std::map<std::vector<int>, float> ftrs;
+//            for (int i = 0; i < featureCombinations.size(); i++) {
+//                std::vector<std::vector<float>> comb1 = getMatrixFromVector(featureCombinations[i], cl1MAvg);
+//                std::vector<std::vector<float>> comb2 = getMatrixFromVector(featureCombinations[i], cl2MAvg);
+//                std::vector<std::vector<float>> mm1 = multiplyMatrix(comb1, transponate(comb1), getProbabilityVector(class1.size()));
+//                std::vector<std::vector<float>> mm2 = multiplyMatrix(comb2, transponate(comb2), getProbabilityVector(class2.size()));
+//                std::vector<float> median1 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class1ObFeatures));
+//                std::vector<float> median2 = getVectorFromVector(featureCombinations[i], getMatrixMedian(class2ObFeatures));
+//                float medianModule = getVectorModule(getVectorDifference(median1, median2));
+//                float dt1 = getMatrixDeterminant(mm1);
+//                float dt2 = getMatrixDeterminant(mm2);
+//                if (dimension == 1) {
+//                    ftrs[featureCombinations[i]] = medianModule/(sqrt(dt1) + sqrt(dt2));
+//                } else {
+//                ftrs[featureCombinations[i]] = medianModule/(dt1 + dt2);
+//                }
+//            }
+//            float max = 0.0;
+//            std::pair<std::vector<int>, float> maxp;
+//            for (auto it = ftrs.begin(); it != ftrs.end(); ++it) {
+//                if (it->second > max) {
+//                    max = it->second;
+//                    maxp = std::make_pair(it->first, it->second);
+//                }
+//            }
+//            QString s = vectorToString(maxp.first);
+//            ui->FStextBrowserDatabaseInfo->append("max_vector: {"  +  s + "} " + QString::number(maxp.second));
 //        {
 //            float FLD = 0, tmp;
 //            int max_ind = -1;
