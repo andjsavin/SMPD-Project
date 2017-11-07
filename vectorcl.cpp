@@ -39,20 +39,20 @@ std::vector<std::vector<int> > comb(int N, int K)
     return vc;
 }
 
-float getVectorModule(std::vector<float> v)
+double getVectorModule(std::vector<double> v)
 {
-    float m =0.0;
+    double m =0.0;
     for (int i = 0; i < v.size(); i++) {
         m += v[i]*v[i];
     }
     return sqrt(m);
 }
 
-std::vector<float> getMatrixMedian(std::vector<std::vector<float> > v)
+std::vector<double> getMatrixMedian(std::vector<std::vector<double> > v)
 {
-    std::vector<float> mm;
+    std::vector<double> mm;
     for (int i = 0; i < v.size(); i++) {
-        float h = 0.0;
+        double h = 0.0;
         for (int j = 0; j < v[i].size(); j++) {
             h += v[i][j];
         }
@@ -61,22 +61,22 @@ std::vector<float> getMatrixMedian(std::vector<std::vector<float> > v)
     return mm;
 }
 
-std::vector<float> getVectorDifference(std::vector<float> v1, std::vector<float> v2)
+std::vector<double> getVectorDifference(std::vector<double> v1, std::vector<double> v2)
 {
-    std::vector<float> v;
+    std::vector<double> v;
     for (int i = 0; i < v1.size(); i++) {
-        float h = v1[i] - v2[i];
+        double h = v1[i] - v2[i];
         v.push_back(h);
     }
     return v;
 }
 
-std::vector<std::vector<float>> getMatrixFromVector(std::vector<int> v, std::vector<std::vector<float>> m)
+std::vector<std::vector<double>> getMatrixFromVector(std::vector<int> v, std::vector<std::vector<double>> m)
 {
-    std::vector<std::vector<float>> newm;
+    std::vector<std::vector<double>> newm;
     for (int i = 0; i < m.size(); i++) {
         if (std::binary_search(v.begin(), v.end(), i)) {
-            std::vector<float> h;
+            std::vector<double> h;
             for (int j = 0; j < m[i].size(); j++) {
                 h.push_back(m[i][j]);
             }
@@ -86,7 +86,7 @@ std::vector<std::vector<float>> getMatrixFromVector(std::vector<int> v, std::vec
     return newm;
 }
 
-std::vector<std::vector<float>> minor(std::vector<std::vector<float>> m, const int &i, const int &j) {
+std::vector<std::vector<double>> minor(std::vector<std::vector<double>> m, const int &i, const int &j) {
     m.erase(m.begin() + i);
     for (auto &a_m : m) {
         a_m.erase(a_m.begin() + j);
@@ -94,7 +94,7 @@ std::vector<std::vector<float>> minor(std::vector<std::vector<float>> m, const i
     return m;
 }
 
-float getMatrixDeterminant(const std::vector<std::vector<float>> &m)
+double getMatrixDeterminant(const std::vector<std::vector<double>> &m)
 {
     int k = m.size();
     int l = m[0].size();
@@ -105,7 +105,7 @@ float getMatrixDeterminant(const std::vector<std::vector<float>> &m)
         return m[0][0];
     }
     int signum = 1;
-    float summ = 0.0;
+    double summ = 0.0;
     int j = 0;
     for (auto &m_0j: m[0]) {
         summ += m_0j*signum*getMatrixDeterminant(minor(m, 0, j));
@@ -115,12 +115,12 @@ float getMatrixDeterminant(const std::vector<std::vector<float>> &m)
     return summ;
 }
 
-std::vector<std::vector<float>> transponate(std::vector<std::vector<float>> v1)
+std::vector<std::vector<double>> transponate(std::vector<std::vector<double>> v1)
 {
-    float temp;
-    std::vector<std::vector<float>> vh;
+    double temp;
+    std::vector<std::vector<double>> vh;
     for (int i = 0; i < v1[0].size(); i++) {
-        std::vector<float> vf;
+        std::vector<double> vf;
         for (int j = 0; j < v1.size(); j++) {
             vf.push_back(v1[j][i]);
         }
@@ -129,14 +129,14 @@ std::vector<std::vector<float>> transponate(std::vector<std::vector<float>> v1)
     return vh;
 }
 
-void printv(std::vector<float> v) {
+void printv(std::vector<double> v) {
     for (int i = 0; i < v.size(); i++) {
         std::cout << " " << v[i];
     }
     std::cout << std::endl;
 }
 
-void printvv(std::vector<std::vector<float>> v) {
+void printvv(std::vector<std::vector<double>> v) {
     for (int i = 0; i < v.size(); i++) {
         for (int j = 0; j < v[i].size(); j++) {
             std::cout << " " << v[i][j];
@@ -146,20 +146,20 @@ void printvv(std::vector<std::vector<float>> v) {
     std::cout << std::endl;
 }
 
-std::vector<float> getProbabilityVector(int k)
+std::vector<double> getProbabilityVector(int k)
 {
-    std::vector<float> v;
+    std::vector<double> v;
     for (int i = 0; i < k; i++) {
         v.push_back(1.0/k);
     }
     return v;
 }
 
-std::vector<std::vector<float>> minusAvg(std::vector<float> v, std::vector<std::vector<float>> m)
+std::vector<std::vector<double>> minusAvg(std::vector<double> v, std::vector<std::vector<double>> m)
 {
-    std::vector<std::vector<float>> vh;
+    std::vector<std::vector<double>> vh;
     for (int i = 0; i < m.size(); i++) {
-        std::vector<float> vv;
+        std::vector<double> vv;
         for (int j = 0; j < m[i].size(); j++) {
             vv.push_back(m[i][j] - v[i]);
         }
@@ -168,13 +168,13 @@ std::vector<std::vector<float>> minusAvg(std::vector<float> v, std::vector<std::
     return vh;
 }
 
-std::vector<std::vector<float>> multiplyMatrix(std::vector<std::vector<float>> v1, std::vector<std::vector<float>> v2, std::vector<float> prob)
+std::vector<std::vector<double>> multiplyMatrix(std::vector<std::vector<double>> v1, std::vector<std::vector<double>> v2, std::vector<double> prob)
 {
-    std::vector<std::vector<float>> vh;
+    std::vector<std::vector<double>> vh;
     for (int i = 0; i < v1.size(); i++) {
-        std::vector<float> vv;
+        std::vector<double> vv;
         for (int j = 0; j < v2[0].size(); j++) {
-            float temp = 0;
+            double temp = 0;
             for (int inner = 0; inner < v1[i].size(); inner++) {
                 temp += v1[i][inner]*v2[inner][j] * prob[inner];
             }
@@ -185,9 +185,9 @@ std::vector<std::vector<float>> multiplyMatrix(std::vector<std::vector<float>> v
     return vh;
 }
 
-std::vector<float> getVectorFromVector(std::vector<int> v, std::vector<float> vv)
+std::vector<double> getVectorFromVector(std::vector<int> v, std::vector<double> vv)
 {
-    std::vector<float> vh;
+    std::vector<double> vh;
     for (int i = 0; i < vv.size(); i++) {
         if (std::binary_search(v.begin(), v.end(), i))
             vh.push_back(vv[i]);
@@ -204,11 +204,11 @@ QString vectorToString(std::vector<int> v)
     return s;
 }
 
-std::vector<std::vector<float>> mx(float x, std::vector<std::vector<float>> m)
+std::vector<std::vector<double>> mx(double x, std::vector<std::vector<double>> m)
 {
-    std::vector<std::vector<float>> vh;
+    std::vector<std::vector<double>> vh;
     for (int i = 0; i < m.size(); i++){
-        std::vector<float> vv;
+        std::vector<double> vv;
         for (int j = 0; j < m[i].size(); j++) {
             vv.push_back(m[i][j]/x);
         }

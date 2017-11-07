@@ -8,7 +8,7 @@ class Classifier
 		
 		virtual void train() = 0;
 		
-		virtual float test() = 0; 
+		virtual double test() = 0; 
 		
 	private:
 	

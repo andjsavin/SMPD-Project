@@ -10,7 +10,7 @@
         return features.size();
     }
 
-    const std::vector<float> &Object::getFeatures() const
+    const std::vector<double> &Object::getFeatures() const
     {
         return features;
     }

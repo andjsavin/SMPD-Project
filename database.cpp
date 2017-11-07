@@ -73,7 +73,7 @@ bool Database::load(const std::string &fileName)
 
         std::string features = line.substr(pos+1);
 
-        std::vector<float> featuresValues;
+        std::vector<double> featuresValues;
 
         while (true)
         {
@@ -83,12 +83,12 @@ bool Database::load(const std::string &fileName)
             {
                 std::string feature = features.substr(0, pos);
                 features = features.substr(pos + 1);
-                float featureValue = std::stof(feature);
+                double featureValue = std::stof(feature);
                 featuresValues.push_back(featureValue);
             }
             else
             {
-                float featureValue = std::stof(features);
+                double featureValue = std::stof(features);
                 featuresValues.push_back(featureValue);
                 break;
             }
@@ -125,7 +125,7 @@ void Database::save(const std::string &fileName)
     {
         file << ob.getClassName() + ",";
 
-        std::for_each(ob.getFeatures().begin(), ob.getFeatures().end(), [&](float n)
+        std::for_each(ob.getFeatures().begin(), ob.getFeatures().end(), [&](double n)
         {
             file << n << ",";
 
