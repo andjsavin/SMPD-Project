@@ -75,7 +75,7 @@ std::vector<std::vector<double>> getMatrixFromVector(std::vector<int> v, std::ve
 {
     std::vector<std::vector<double>> newm;
     for (int i = 0; i < m.size(); i++) {
-        if (std::binary_search(v.begin(), v.end(), i)) {
+        if (std::find(v.begin(), v.end(), i) != v.end()) {
             std::vector<double> h;
             for (int j = 0; j < m[i].size(); j++) {
                 h.push_back(m[i][j]);
@@ -189,7 +189,7 @@ std::vector<double> getVectorFromVector(std::vector<int> v, std::vector<double> 
 {
     std::vector<double> vh;
     for (int i = 0; i < vv.size(); i++) {
-        if (std::binary_search(v.begin(), v.end(), i))
+        if (std::find(v.begin(), v.end(), i) != v.end())
             vh.push_back(vv[i]);
     }
     return vh;

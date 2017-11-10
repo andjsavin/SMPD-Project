@@ -74,8 +74,6 @@ void MainWindow::on_FSpushButtonOpenFile_clicked()
 void MainWindow::on_FSpushButtonCompute_clicked()
 {
     int dimension = ui->FScomboBox->currentText().toInt();
-
-
     if( ui->FSradioButtonFisher ->isChecked())
     {
         if (database.getNoClass() == 2)
@@ -130,16 +128,16 @@ void MainWindow::on_FSpushButtonCompute_clicked()
                 double dt2 = determinant(m2);
                 if (dimension == 1) {
                     if (max < medianModule/(sqrt(dt1) + sqrt(dt2)))
-                    {
-                        maxVector = vh;
-                        max = medianModule/(sqrt(dt1) + sqrt(dt2));
-                    }
+                        {
+                            maxVector= vh;
+                            max = medianModule/(sqrt(dt1) + sqrt(dt2));
+                        }
                 } else {
                     if (max < medianModule/(dt1 + dt2))
-                    {
-                        maxVector= vh;
-                        max = medianModule/(dt1 + dt2);
-                    }
+                        {
+                            maxVector= vh;
+                            max = medianModule/(dt1 + dt2);
+                        }
                 }
             } while (std::prev_permutation(bitmask.begin(), bitmask.end())); // lexicographilly permute bitmask
             QString s = vectorToString(maxVector);
@@ -207,6 +205,91 @@ void MainWindow::on_FSpushButtonCompute_clicked()
 
 //            ui->FStextBrowserDatabaseInfo->append("max_ind: "  +  QString::number(max_ind) + " " + QString::number(FLD));
 //          }
+        }
+    }
+    if( ui->FSradioButtonSFS ->isChecked())
+    {
+        if (database.getNoClass() == 2)
+        {
+            std::vector<Object> class1;
+            std::vector<Object> class2;
+            std::vector<Object> all_obj = database.getObjects();
+            std::string cur_name = database.getObjects()[0].getClassName();
+            for (uint i = 0; i < all_obj.size(); i++) {
+                if (all_obj[i].getClassName() == cur_name) {
+                    class1.push_back(all_obj[i]);
+                } else {
+                    class2.push_back(all_obj[i]);
+                }
+            }
+            std::vector<std::vector<double>> class1ObFeatures;
+            std::vector<std::vector<double>> class2ObFeatures;
+            for (uint i = 0; i < class1.size(); i++) {
+                class1ObFeatures.push_back(class1[i].getFeatures());
+            }
+            for (uint i = 0; i < class2.size(); i++) {
+                class2ObFeatures.push_back(class2[i].getFeatures());
+            }
+            class1ObFeatures = transponate(class1ObFeatures);
+            class2ObFeatures = transponate(class2ObFeatures);
+            std::vector<std::vector<double>> cl1MAvg = minusAvg(getMatrixMedian(class1ObFeatures), class1ObFeatures);
+            std::vector<std::vector<double>> cl2MAvg = minusAvg(getMatrixMedian(class2ObFeatures), class2ObFeatures);
+            int N = database.getNoFeatures();
+            int K = dimension;
+            double max = 0.0;
+            std::vector<int> maxVector;
+            std::vector<int> vh;
+            std::vector<int> allN;
+            for (int i = 0; i < N; i++) {
+                allN.push_back(i);
+            }
+            for (int i = 0; i < K; i++) {
+                double tempmax = 0.0;
+                maxVector.push_back(-1);
+                vh.push_back(-1);
+                int j = 0;
+                if (i > 0) {
+                    for (int x = 0; x < allN.size(); x++) {
+                        if (allN[x] == vh[vh.size() -2]) {
+                            allN.erase(allN.begin() + x);
+                            std::vector<int>(allN).swap(allN);
+                        }
+                    }
+                }
+                do {
+                    vh[vh.size() - 1] = allN[j];
+                    std::vector<std::vector<double>> comb1 = getMatrixFromVector(vh, cl1MAvg);
+                    std::vector<std::vector<double>> comb2 = getMatrixFromVector(vh, cl2MAvg);
+                    std::vector<std::vector<double>> mm1 = multiplyMatrix(comb1, transponate(comb1), getProbabilityVector(class1.size()));
+                    std::vector<std::vector<double>> mm2 = multiplyMatrix(comb2, transponate(comb2), getProbabilityVector(class2.size()));
+                    std::vector<double> median1 = getVectorFromVector(vh, getMatrixMedian(class1ObFeatures));
+                    std::vector<double> median2 = getVectorFromVector(vh, getMatrixMedian(class2ObFeatures));
+                    double medianModule = getVectorModule(getVectorDifference(median1, median2));
+                    bnu::matrix<double> m1 = getMatrix(mm1);
+                    bnu::matrix<double> m2 = getMatrix(mm2);
+                    double dt1 = determinant(m1);
+                    double dt2 = determinant(m2);
+                    if (i == 0) {
+                        if (tempmax < medianModule/(sqrt(dt1) + sqrt(dt2)))
+                        {
+                            tempmax = medianModule/(sqrt(dt1) + sqrt(dt2));
+                            maxVector[maxVector.size() - 1] = allN[j];
+                        }
+
+                    } else {
+                        if (tempmax < medianModule/(dt1 + dt2))
+                        {
+                            tempmax = medianModule/(dt1 + dt2);
+                            maxVector[maxVector.size() - 1] = allN[j];
+                        }
+                    }
+                    j++;
+                } while (j < N - i);
+                max = tempmax;
+                vh[vh.size() - 1] = maxVector[maxVector.size() - 1];
+            }
+            QString s = vectorToString(maxVector);
+            ui->FStextBrowserDatabaseInfo->append("max_vector: {"  +  s + "} " + QString::number(max));
         }
     }
 }
