@@ -121,7 +121,7 @@ void MainWindow::on_FSpushButtonCompute_clicked()
                 std::vector<std::vector<double>> mm2 = multiplyMatrix(comb2, transponate(comb2), getProbabilityVector(class2.size()));
                 std::vector<double> median1 = getVectorFromVector(vh, getMatrixMedian(class1ObFeatures));
                 std::vector<double> median2 = getVectorFromVector(vh, getMatrixMedian(class2ObFeatures));
-                double medianModule = getVectorModule(getVectorDifference(median1, median2));
+                double medianModule = getVectorModule(getVectorDifference(median1, median2));            
                 bnu::matrix<double> m1 = getMatrix(mm1);
                 bnu::matrix<double> m2 = getMatrix(mm2);
                 double dt1 = determinant(m1);
@@ -311,7 +311,20 @@ void MainWindow::on_PpushButtonSelectFolder_clicked()
 
 void MainWindow::on_CpushButtonOpenFile_clicked()
 {
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Open TextFile"), "", tr("Texts Files (*.txt)"));
 
+    if ( !database.load(fileName.toStdString()) )
+        QMessageBox::warning(this, "Warning", "File corrupted !!!");
+    else
+        QMessageBox::information(this, fileName, "File loaded !!!");
+
+    ui->CcomboBoxClassifiers->addItem("k-NN");
+    ui->CcomboBoxClassifiers->addItem("k-NM");
+    ui->CcomboBoxClassifiers->addItem("NN");
+    ui->CcomboBoxClassifiers->addItem("NM");
+    for (int i = 2; i < 10; i++)
+        ui->CcomboBoxK->addItem(QString::number(i));
 }
 
 void MainWindow::on_CpushButtonSaveFile_clicked()
@@ -319,9 +332,24 @@ void MainWindow::on_CpushButtonSaveFile_clicked()
 
 }
 
-void MainWindow::on_CpushButtonTrain_clicked()
+std::vector<int> MainWindow::on_CpushButtonTrain_clicked()
 {
-
+    std::vector<int> results;
+    int percent = ui->CplainTextEditTrainingPart->toPlainText().toInt();
+    std::vector<Object> class1;
+    std::vector<Object> class2;
+    std::vector<Object> all_obj = database.getObjects();
+    std::string cur_name = database.getObjects()[0].getClassName();
+    for (uint i = 0; i < all_obj.size(); i++) {
+        if (all_obj[i].getClassName() == cur_name) {
+            class1.push_back(all_obj[i]);
+        } else {
+            class2.push_back(all_obj[i]);
+        }
+    }
+    results.push_back(floor(class1.size()*(percent/100.0)));
+    results.push_back(floor(class2.size()*(percent/100.0)));
+    return results;
 }
 
 void MainWindow::on_CpushButtonExecute_clicked()

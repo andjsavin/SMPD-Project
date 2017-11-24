@@ -48,7 +48,7 @@ private slots:
 
     void on_CpushButtonSaveFile_clicked();
 
-    void on_CpushButtonTrain_clicked();
+    std::vector<int> on_CpushButtonTrain_clicked();
 
     void on_CpushButtonExecute_clicked();
 
