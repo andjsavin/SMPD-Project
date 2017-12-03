@@ -216,3 +216,20 @@ std::vector<std::vector<double>> mx(double x, std::vector<std::vector<double>> m
     }
     return vh;
 }
+
+double getDistance(std::vector<double> v1, std::vector<double> v2) {
+    double res = 0.0;
+    for (int i = 0; i < v1.size(); i++) {
+        res += (v1[i] - v2[i])*(v1[i] - v2[i]);
+    }
+    res = sqrt(res);
+    return res;
+}
+
+bool vectCompare(std::vector<double> v1, std::vector<double> v2) {
+    for (int i = 0; i < v1.size(); i++) {
+        if (v1[i] != v2[i])
+            return false;
+    }
+    return true;
+}

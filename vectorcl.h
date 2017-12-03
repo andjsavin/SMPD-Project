@@ -21,3 +21,5 @@ void printvv(std::vector<std::vector<double>> v);
 std::vector<std::vector<double>> minor(std::vector<std::vector<double>> m, const int &i, const int &j);
 QString vectorToString(std::vector<int> v);
 std::vector<std::vector<double> > mx(double x, std::vector<std::vector<double>> m);
+double getDistance(std::vector<double> v1, std::vector<double> v2);
+bool vectCompare(std::vector<double> v1, std::vector<double> v2);

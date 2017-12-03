@@ -36,6 +36,7 @@ HEADERS  += mainwindow.h \
     database.h \
     object.h \
     matrixutil.hpp \
-    vectorcl.h
+    vectorcl.h \
+    invert_matrix.hpp
 
 FORMS    += mainwindow.ui
