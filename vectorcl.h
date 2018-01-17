@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <QString>
+#include <map>
 
 std::vector<std::vector<int>> comb(int N, int K);
 double getVectorModule(std::vector<double> v);
@@ -23,3 +24,12 @@ QString vectorToString(std::vector<int> v);
 std::vector<std::vector<double> > mx(double x, std::vector<std::vector<double>> m);
 double getDistance(std::vector<double> v1, std::vector<double> v2);
 bool vectCompare(std::vector<double> v1, std::vector<double> v2);
+double NN(std::vector<std::vector<double>> trainA, std::vector<std::vector<double>> execA,
+          std::vector<std::vector<double>> trainB, std::vector<std::vector<double>> execB);
+double NM(std::vector<std::vector<double>> trainA, std::vector<std::vector<double>> execA,
+          std::vector<std::vector<double>> trainB, std::vector<std::vector<double>> execB);
+double kNN(std::vector<std::vector<double>> trainA, std::vector<std::vector<double>> execA,
+           std::vector<std::vector<double>> trainB, std::vector<std::vector<double>> execB, int k);
+double kNM(std::vector<std::vector<double>> trainA, std::vector<std::vector<double>> execA,
+           std::vector<std::vector<double>> trainB, std::vector<std::vector<double>> execB, int k);
+bool matrix_comp(std::vector<double> m1, std::vector<double> m2);

@@ -72,6 +72,8 @@ void MainWindow::on_FSpushButtonOpenFile_clicked()
     updateDatabaseInfo();
 }
 
+std::vector<int> mv;
+
 void MainWindow::on_FSpushButtonCompute_clicked()
 {
     int dimension = ui->FScomboBox->currentText().toInt();
@@ -142,6 +144,7 @@ void MainWindow::on_FSpushButtonCompute_clicked()
                 }
             } while (std::prev_permutation(bitmask.begin(), bitmask.end())); // lexicographilly permute bitmask
             QString s = vectorToString(maxVector);
+            mv = maxVector;
             ui->FStextBrowserDatabaseInfo->append("max_vector: {"  +  s + "} " + QString::number(max));
 //            std::vector<std::vector<int>> featureCombinations = comb(database.getNoFeatures(), dimension);
 //            std::map<std::vector<int>, double> ftrs;
@@ -290,6 +293,7 @@ void MainWindow::on_FSpushButtonCompute_clicked()
                 vh[vh.size() - 1] = maxVector[maxVector.size() - 1];
             }
             QString s = vectorToString(maxVector);
+            mv = maxVector;
             ui->FStextBrowserDatabaseInfo->append("max_vector: {"  +  s + "} " + QString::number(max));
         }
     }
@@ -321,13 +325,20 @@ void MainWindow::on_CpushButtonOpenFile_clicked()
         QMessageBox::warning(this, "Warning", "File corrupted !!!");
     else
         QMessageBox::information(this, fileName, "File loaded !!!");
-
-    ui->CcomboBoxClassifiers->addItem("k-NN");
-    ui->CcomboBoxClassifiers->addItem("k-NM");
+    ui->CcomboBoxClassifiers->addItem("");
     ui->CcomboBoxClassifiers->addItem("NN");
+    ui->CcomboBoxClassifiers->addItem("k-NN");
     ui->CcomboBoxClassifiers->addItem("NM");
-    for (int i = 2; i < 10; i++)
+    ui->CcomboBoxClassifiers->addItem("k-NM");
+    ui->CcomboBoxMethods->addItem("");
+    ui->CcomboBoxMethods->addItem("Crossvalidation");
+    ui->CcomboBoxMethods->addItem("Bootstrap");
+    for (int i = 1; i < 10; i++)
         ui->CcomboBoxK->addItem(QString::number(i));
+    ui->CcomboBoxSegs->addItem(QString::number(2));
+    ui->CcomboBoxSegs->addItem(QString::number(4));
+    ui->CcomboBoxSegs->addItem(QString::number(5));
+    ui->CcomboBoxSegs->addItem(QString::number(10));
     train.push_back(0);
     train.push_back(0);
 }
@@ -336,7 +347,7 @@ void MainWindow::on_CpushButtonSaveFile_clicked()
 {
 
 }
-
+int f = 0;
 void MainWindow::on_CpushButtonTrain_clicked()
 {
     int percent = ui->CplainTextEditTrainingPart->toPlainText().toInt();
@@ -353,7 +364,11 @@ void MainWindow::on_CpushButtonTrain_clicked()
     }
     train[0] = (floor(class1.size()*(percent/100.0)));
     train[1] = (floor(class2.size()*(percent/100.0)));
+    f = 0;
 }
+
+std::vector<Object> class1copy;
+std::vector<Object> class2copy;
 
 void MainWindow::on_CpushButtonExecute_clicked()
 {
@@ -363,12 +378,22 @@ void MainWindow::on_CpushButtonExecute_clicked()
     std::vector<Object> class2;
     std::vector<Object> all_obj = database.getObjects();
     std::string cur_name = database.getObjects()[0].getClassName();
-    for (uint i = 0; i < all_obj.size(); i++) {
-        if (all_obj[i].getClassName() == cur_name) {
-            class1.push_back(all_obj[i]);
-        } else {
-            class2.push_back(all_obj[i]);
+    if (f == 0){
+        for (uint i = 0; i < all_obj.size(); i++) {
+            if (all_obj[i].getClassName() == cur_name) {
+                class1.push_back(all_obj[i]);
+            } else {
+                class2.push_back(all_obj[i]);
+            }
         }
+        random_shuffle(class1.begin(), class1.end());
+        random_shuffle(class2.begin(), class2.end());
+        class1copy = class1;
+        class2copy = class2;
+        f = 1;
+    } else {
+        class1 = class1copy;
+        class2 = class2copy;
     }
     std::vector<std::vector<double>> class1ObFeatures;
     std::vector<std::vector<double>> class2ObFeatures;
@@ -390,6 +415,15 @@ void MainWindow::on_CpushButtonExecute_clicked()
     class2ObFeatures = transponate(class2ObFeatures);
     cl1t = transponate(cl1t);
     cl2t = transponate(cl2t);
+    if (mv.size() > 1) {
+        class1ObFeatures = getMatrixFromVector(mv, class1ObFeatures);
+        class2ObFeatures = getMatrixFromVector(mv, class2ObFeatures);
+        cl1t = getMatrixFromVector(mv, cl1t);
+        cl2t = getMatrixFromVector(mv, cl2t);
+        for(auto i = mv.begin(); i != mv.end(); ++i) {
+            std::cout << *i << " ";
+          }
+    }
     std::vector<double> medianA = getMatrixMedian(cl1t);
     std::vector<double> medianB = getMatrixMedian(cl2t);
     class1ObFeatures = transponate(class1ObFeatures);
@@ -411,175 +445,161 @@ void MainWindow::on_CpushButtonExecute_clicked()
 //    std::cout << inverseB;
     string classifier = ui->CcomboBoxClassifiers->currentText().toStdString();
     if (classifier == "NN") {
-        int correct = 0;
-        for (int i = trainA; i < class1ObFeatures.size(); i++) {
-            double minA = getDistance(class1ObFeatures[0], class1ObFeatures[i]);
-            double minB = getDistance(class2ObFeatures[0], class1ObFeatures[i]);
-            for (int j = 1; j < trainA; j++) {
-                if (getDistance(class1ObFeatures[j], class1ObFeatures[i]) < minA)
-                    minA = getDistance(class1ObFeatures[j], class1ObFeatures[i]);
-            }
-            for (int j = 1; j < trainB; j++) {
-                if (getDistance(class2ObFeatures[j], class1ObFeatures[i]) < minA)
-                    minB = getDistance(class2ObFeatures[j], class1ObFeatures[i]);
-            }
-            if (minA < minB)
-                correct++;
+        std::vector<std::vector<double>> tA;
+        std::vector<std::vector<double>> execA;
+        std::vector<std::vector<double>> tB;
+        std::vector<std::vector<double>> execB;
+        for (int i = 0; i < class1ObFeatures.size(); i++) {
+            if (i < trainA) tA.push_back(class1ObFeatures[i]);
+            else execA.push_back(class1ObFeatures[i]);
         }
-        for (int i = trainB; i < class2ObFeatures.size(); i++) {
-            double minA = getDistance(class1ObFeatures[0], class2ObFeatures[i]);
-            double minB = getDistance(class2ObFeatures[0], class2ObFeatures[i]);
-            for (int j = 1; j < trainA; j++) {
-                if (getDistance(class1ObFeatures[j], class2ObFeatures[i]) < minA)
-                    minA = getDistance(class1ObFeatures[j], class2ObFeatures[i]);
-            }
-            for (int j = 1; j < trainB; j++) {
-                if (getDistance(class2ObFeatures[j], class2ObFeatures[i]) < minA)
-                    minB = getDistance(class2ObFeatures[j], class2ObFeatures[i]);
-            }
-            if (minB < minA)
-                correct++;
+        for (int i = 0; i < class2ObFeatures.size(); i++) {
+            if (i < trainB) tB.push_back(class2ObFeatures[i]);
+            else execB.push_back(class2ObFeatures[i]);
         }
-        double p = (correct*1.0/(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB))*100;
-        ui->CtextBrowser->append("NN:\nNumber of correct classifications: "  +  QString::number(correct) + " of "
+        double p = NN(tA, execA, tB, execB);
+        ui->CtextBrowser->append("NN:\nPercent of correct classifications from "
                                  + QString::number(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB)
-                                 + "\n" + QString::number(p) + "%");
+                                 + " observations: " + QString::number(p) + "%");
     }
     if (classifier == "NM") {
-        int correct = 0;
-        for (int i = trainA; i < class1ObFeatures.size(); i++) {
-            double min = getDistance(medianB, class1ObFeatures[i]);
-            if (getDistance(medianA, class1ObFeatures[i]) < min)
-                correct++;
+        std::vector<std::vector<double>> tA;
+        std::vector<std::vector<double>> execA;
+        std::vector<std::vector<double>> tB;
+        std::vector<std::vector<double>> execB;
+        for (int i = 0; i < class1ObFeatures.size(); i++) {
+            if (i < trainA) tA.push_back(class1ObFeatures[i]);
+            else execA.push_back(class1ObFeatures[i]);
         }
-        for (int i = trainB; i < class2ObFeatures.size(); i++) {
-            double min = getDistance(medianA, class2ObFeatures[i]);
-            if (getDistance(medianB, class2ObFeatures[i]) < min)
-                correct++;
+        for (int i = 0; i < class2ObFeatures.size(); i++) {
+            if (i < trainB) tB.push_back(class2ObFeatures[i]);
+            else execB.push_back(class2ObFeatures[i]);
         }
-        double p = (correct*1.0/(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB))*100;
-        ui->CtextBrowser->append("NM:\nNumber of correct classifications: "  +  QString::number(correct) + " of "
+        double p = NM(tA, execA, tB, execB);
+        ui->CtextBrowser->append("NM:\nPercent of correct classifications from "
                                  + QString::number(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB)
-                                 + "\n" + QString::number(p) + "%");
+                                 + " observations: " + QString::number(p) + "%");
     }
     if (classifier == "k-NN") {
-        int correct = 0;
-        for (int i = trainA; i < class1ObFeatures.size(); i++) {
-            std::vector<double> dA;
-            std::vector<double> dB;
-            for (int j = 0; j < trainA; j++) {
-                dA.push_back(getDistance(class1ObFeatures[j], class1ObFeatures[i]));
-            }
-            for (int j = 0; j < trainB; j++) {
-                dB.push_back(getDistance(class2ObFeatures[j], class1ObFeatures[i]));
-            }
-            sort(dA.begin(), dA.end());
-            sort(dB.begin(), dB.end());
-            int ai = 0;
-            int bi = 0;
-            int cb = 0;
-            int ca = 0;
-            for (int j = 0; j < ui->CcomboBoxK->currentText().toInt(); j++) {
-                if (dA[ai] < dB[bi]) {
-                    ca++;
-                    ai++;
-                } else {
-                    cb++;
-                    bi++;
-                }
-            }
-            if (ca > cb)
-                correct++;
+        std::vector<std::vector<double>> tA;
+        std::vector<std::vector<double>> execA;
+        std::vector<std::vector<double>> tB;
+        std::vector<std::vector<double>> execB;
+        for (int i = 0; i < class1ObFeatures.size(); i++) {
+            if (i < trainA) tA.push_back(class1ObFeatures[i]);
+            else execA.push_back(class1ObFeatures[i]);
         }
-        for (int i = trainB; i < class2ObFeatures.size(); i++) {
-            std::vector<double> dA;
-            std::vector<double> dB;
-            for (int j = 0; j < trainA; j++) {
-                dA.push_back(getDistance(class1ObFeatures[j], class2ObFeatures[i]));
-            }
-            for (int j = 0; j < trainB; j++) {
-                dB.push_back(getDistance(class2ObFeatures[j], class2ObFeatures[i]));
-            }
-            sort(dA.begin(), dA.end());
-            sort(dB.begin(), dB.end());
-            int ai = 0;
-            int bi = 0;
-            int cb = 0;
-            int ca = 0;
-            for (int j = 0; j < ui->CcomboBoxK->currentText().toInt(); j++) {
-                if (dA[ai] < dB[bi]) {
-                    ca++;
-                    ai++;
-                } else {
-                    cb++;
-                    bi++;
-                }
-            }
-            if (cb > ca)
-                correct++;
+        for (int i = 0; i < class2ObFeatures.size(); i++) {
+            if (i < trainB) tB.push_back(class2ObFeatures[i]);
+            else execB.push_back(class2ObFeatures[i]);
         }
-        double p = (correct*1.0/(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB))*100;
-        ui->CtextBrowser->append("k-NN (k=" + QString::number( ui->CcomboBoxK->currentText().toInt()) +
-                                 "):\nNumber of correct classifications: "  +  QString::number(correct) + " of "
+        double p = kNN(tA, execA, tB, execB, ui->CcomboBoxK->currentText().toInt());
+        ui->CtextBrowser->append("k-NN(k=" + QString::number(ui->CcomboBoxK->currentText().toInt()) + "):\nPercent of correct classifications from "
                                  + QString::number(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB)
-                                 + "\n" + QString::number(p) + "%");
+                                 + " observations: " + QString::number(p) + "%");
     }
     if (classifier == "k-NM") {
-        int correct = 0;
-        class1ObFeatures = transponate(class1ObFeatures);
-        class2ObFeatures = transponate(class2ObFeatures);
-        std::vector<double> mA = getMatrixMedian(class1ObFeatures);
-        std::vector<double> mB = getMatrixMedian(class2ObFeatures);
-        std::vector<double> mcA = getMatrixMedian(class1ObFeatures);
-        std::vector<double> mcB = getMatrixMedian(class2ObFeatures);
-        class1ObFeatures = transponate(class1ObFeatures);
-        class2ObFeatures = transponate(class2ObFeatures);
-        do {
-            correct = 0;
-            std::vector<std::vector<double>> c1;
-            std::vector<std::vector<double>> c2;
-            for (uint i = 0; i < class1.size(); i++) {
-                if (i < trainA) {
-                    c1.push_back(class1[i].getFeatures());
-                }
-            }
-            for (uint i = 0; i < class2.size(); i++) {
-                if (i < trainB) {
-                    c2.push_back(class2[i].getFeatures());
-                }
-            }
-            for (int i = trainA; i < class1ObFeatures.size(); i++) {
-                double min = getDistance(mB, class1ObFeatures[i]);
-                if (getDistance(mA, class1ObFeatures[i]) < min) {
-                    c1.push_back(class1ObFeatures[i]);
-                    correct++;
-                } else {
-                    c2.push_back(class1ObFeatures[i]);
-                }
-            }
-            for (int i = trainB; i < class2ObFeatures.size(); i++) {
-                double min = getDistance(mA, class2ObFeatures[i]);
-                if (getDistance(mB, class2ObFeatures[i]) < min) {
-                    c2.push_back(class2ObFeatures[i]);
-                    correct++;
-                } else {
-                    c1.push_back(class2ObFeatures[i]);
-                }
-            }
-            c2 = transponate(c2);
-            c1 = transponate(c1);
-            mcA = getMatrixMedian(c1);
-            mcB = getMatrixMedian(c2);
-            if (vectCompare(mA, mcA))
-                break;
-            else {
-                mA = mcA;
-                mB = mcB;
-            }
-        } while (true);
-        double p = (correct*1.0/(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB))*100;
-        ui->CtextBrowser->append("k-NM (k=2):\nNumber of correct classifications: "  +  QString::number(correct) + " of "
+        std::vector<std::vector<double>> tA;
+        std::vector<std::vector<double>> execA;
+        std::vector<std::vector<double>> tB;
+        std::vector<std::vector<double>> execB;
+        for (int i = 0; i < class1ObFeatures.size(); i++) {
+            if (i < trainA) tA.push_back(class1ObFeatures[i]);
+            else execA.push_back(class1ObFeatures[i]);
+        }
+        for (int i = 0; i < class2ObFeatures.size(); i++) {
+            if (i < trainB) tB.push_back(class2ObFeatures[i]);
+            else execB.push_back(class2ObFeatures[i]);
+        }
+        double p = kNM(tA, execA, tB, execB, ui->CcomboBoxK->currentText().toInt());
+        ui->CtextBrowser->append("k-NM(k=" + QString::number(ui->CcomboBoxK->currentText().toInt()) + "):\nPercent of correct classifications from "
                                  + QString::number(class1ObFeatures.size() + class2ObFeatures.size() - trainA - trainB)
-                                 + "\n" + QString::number(p) + "%");
+                                 + " observations: " + QString::number(p) + "%");
+    }
+    if (ui->CcomboBoxMethods->currentText().toStdString() == "Crossvalidation") {
+        double p = 0.0;
+        for (int i = 0; i < ui->CcomboBoxSegs->currentText().toInt(); i++) {
+            int trainAend = (i + 1) * (floor(class1.size()*((100/ui->CcomboBoxSegs->currentText().toInt())/100.0)));
+            int trainBend = (i + 1) * (floor(class2.size()*((100/ui->CcomboBoxSegs->currentText().toInt())/100.0)));
+            int trainAstart = i * (floor(class1.size()*((100/ui->CcomboBoxSegs->currentText().toInt())/100.0)));
+            int trainBstart = i * (floor(class2.size()*((100/ui->CcomboBoxSegs->currentText().toInt())/100.0)));
+            if ((i - 1) == ui->CcomboBoxSegs->currentText().toInt()) {
+                trainAend = class1ObFeatures.size();
+                trainBend = class2ObFeatures.size();
+            }
+            std::vector<std::vector<double>> tA;
+            std::vector<std::vector<double>> execA;
+            std::vector<std::vector<double>> tB;
+            std::vector<std::vector<double>> execB;
+            for (int i = 0; i < class1ObFeatures.size(); i++) {
+                if ((i >= trainAstart) && (i < trainAend)) tA.push_back(class1ObFeatures[i]);
+                else execA.push_back(class1ObFeatures[i]);
+            }
+            for (int i = 0; i < class2ObFeatures.size(); i++) {
+                if ((i >= trainBstart) && (i < trainBend)) tB.push_back(class2ObFeatures[i]);
+                else execB.push_back(class2ObFeatures[i]);
+            }
+            if (classifier == "NN")
+                p = p + NN(tA, execA, tB, execB);
+            if (classifier == "k-NN")
+                p = p + kNN(tA, execA, tB, execB, ui->CcomboBoxK->currentText().toInt());
+            if (classifier == "NM")
+                p = p + NM(tA, execA, tB, execB);
+            if (classifier == "k-NM")
+                p = p + kNM(tA, execA, tB, execB, ui->CcomboBoxK->currentText().toInt());
+        }
+        ui->CtextBrowser->append("Crossvalidation: " + QString::number(p/ui->CcomboBoxSegs->currentText().toInt()) + "%");
+    }
+    if (ui->CcomboBoxMethods->currentText().toStdString() == "Bootstrap") {
+        std::vector<int> indexesA;
+        std::vector<int> indexesB;
+        srand(time(0));
+        for (int i = 0; i < class1ObFeatures.size(); i++) {
+            indexesA.push_back(0 + rand() % (class1ObFeatures.size() - 1));
+        }
+        for (int i = 0; i < class2ObFeatures.size(); i++) {
+            indexesB.push_back(0 + rand() % (class2ObFeatures.size() - 1));
+        }
+        std::vector<int> tA;
+        std::vector<int> tB;
+        for (int i = 0; i < indexesA.size(); i++) {
+            std::vector<int>::iterator it = std::find(tA.begin(), tA.end(), indexesA[i]);
+            if (it == tA.end())
+                tA.push_back(indexesA[i]);
+        }
+        for (int i = 0; i < indexesB.size(); i++) {
+            std::vector<int>::iterator it = std::find(tB.begin(), tB.end(), indexesB[i]);
+            if (it == tB.end())
+                tB.push_back(indexesB[i]);
+        }
+        std::vector<std::vector<double>> trA;
+        std::vector<std::vector<double>> execA;
+        std::vector<std::vector<double>> trB;
+        std::vector<std::vector<double>> execB;
+        for (int i = 0; i < class1ObFeatures.size(); i++) {
+            std::vector<int>::iterator it = std::find(tA.begin(), tA.end(), i);
+            if (it != tA.end())
+                trA.push_back(class1ObFeatures[i]);
+            else
+                execA.push_back(class1ObFeatures[i]);
+        }
+        for (int i = 0; i < class2ObFeatures.size(); i++) {
+            std::vector<int>::iterator it = std::find(tB.begin(), tB.end(), i);
+            if (it != tB.end())
+                trB.push_back(class2ObFeatures[i]);
+            else
+                execB.push_back(class2ObFeatures[i]);
+        }
+        double p = 0.0;
+        if (classifier == "NN")
+            p = NN(trA, execA, trB, execB);
+        if (classifier == "k-NN")
+            p = kNN(trA, execA, trB, execB, ui->CcomboBoxK->currentText().toInt());
+        if (classifier == "NM")
+            p = NM(trA, execA, trB, execB);
+        if (classifier == "k-NM")
+            p = kNM(trA, execA, trB, execB, ui->CcomboBoxK->currentText().toInt());
+         ui->CtextBrowser->append("Bootstrap: Percent of correct classifications from " +
+                                  QString::number(execA.size() + execB.size()) + ": " + QString::number(p) + "%");
     }
 }

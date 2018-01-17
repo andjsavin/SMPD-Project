@@ -14,4 +14,6 @@ double determinant( bnu::matrix<double>& m );
 
 bnu::matrix<double> getMatrix(std::vector<std::vector<double>> v);
 
+bool matrix_comp(std::vector<double> m1, std::vector<double> m2);
+
 #endif // MATRIXUTIL_H
